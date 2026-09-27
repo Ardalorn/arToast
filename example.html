@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ArToast — UAT</title>
+<style>
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  --bg: #f4f5f7; --fg: #1a1a1a; --card: #ffffff; --border: #e2e4e8;
+  --muted: #666; --accent: #0a7c2f; --toast-bg: #1a1a1a; --toast-fg: #fff;
+  --log-bg: #10151c; --log-fg: #9fe6a0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14161a; --fg: #eee; --card: #1f2228; --border: #2e323a; --muted: #9aa0aa;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14161a; --fg: #eee; --card: #1f2228; --border: #2e323a; --muted: #9aa0aa;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 16px 16px 150px;
+}
+h1 { font-size: 1.25rem; margin: 4px 0 2px; }
+h2 { font-size: 1rem; margin: 22px 0 10px; }
+p.sub { color: var(--muted); margin: 0 0 18px; font-size: .88rem; line-height: 1.4; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.card .name { font-weight: 600; font-size: .92rem; line-height: 1.25; }
+.card .meta { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: .82rem; }
+.card .hint { font-size: .75rem; color: var(--muted); }
+.card label { font-size: .78rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.card input[type=number] {
+  width: 56px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg); color: var(--fg);
+}
+.card button {
+  margin-top: 4px; padding: 8px; border: none; border-radius: 8px; background: var(--fg); color: var(--bg);
+  font-weight: 600; font-size: .85rem; cursor: pointer;
+}
+.edge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.edge-row button {
+  padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card);
+  color: var(--fg); font-size: .82rem; cursor: pointer;
+}
+#stats { font-size: .82rem; color: var(--muted); margin-top: 8px; }
+#log {
+  margin-top: 6px; background: var(--log-bg); color: var(--log-fg); border-radius: 8px; padding: 10px;
+  font: 11px/1.5 ui-monospace, Menlo, monospace; height: 160px; overflow-y: auto;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+
+/* --- ArToast styles --- */
+#toastContainer {
+  position: fixed; left: 16px; bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; gap: 8px; transition: bottom .2s ease;
+  z-index: 1000; width: min(320px, calc(100vw - 32px));
+}
+.toast {
+  background: var(--toast-bg); color: var(--toast-fg); padding: 12px 14px; border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.2); transform: translateX(-120%); opacity: 0;
+  transition: transform .2s ease, opacity .2s ease;
+}
+.toast.show { transform: translateX(0); opacity: 1; }
+.toast.exit-right { transform: translateX(120%); opacity: 0; }
+.toast-title { font-weight: 700; font-size: .95rem; }
+.toast-subtitle { font-size: .8rem; opacity: .75; margin-top: 2px; }
+.toast-row { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+.toast-qty { font-size: .8rem; opacity: .8; }
+.toast-price { font-weight: 600; }
+.toast-custom { margin-top: 6px; font-size: .8rem; display: flex; align-items: center; gap: 6px; }
+
+#checkout {
+  position: fixed; left: 16px; bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  background: var(--accent); color: #fff; padding: 10px 14px; border-radius: 8px;
+  transform: translateY(120%); opacity: 0; transition: transform .25s ease, opacity .25s ease;
+  font-size: .85rem; font-weight: 600; width: min(320px, calc(100vw - 32px));
+}
+#checkout.showC { transform: translateY(0); opacity: 1; }
+
+.minicart-requirements-icon-pet {
+  width: 20px; height: 20px; border-radius: 50%; display: inline-block; position: relative;
+  border: 1px solid rgb(77,77,77); outline: 1px solid rgb(204,38,67); font-size: 0; cursor: pointer;
+  flex: none; background: var(--card);
+}
+.minicart-requirements-icon-pet::before {
+  content: '🐾'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; line-height: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast, #checkout, #toastContainer { transition-duration: .01s; }
+}
+</style>
+</head>
+<body>
+
+<h1>🍞 ArToast UAT</h1>
+
+<h2>Products</h2>
+<div class="grid" id="grid" data-testid="product-grid"></div>
+
+<h2>Edge cases</h2>
+<div class="edge-row">
+  <button id="btnOverflow" data-testid="edge-overflow">Fire 6 toasts (overflow)</button>
+  <button id="btnEmpty" data-testid="edge-empty">Empty toast (no fields)</button>
+  <button id="btnRegression" data-testid="edge-regression">Badge → plain (custom reset check)</button>
+  <button id="btnClearLog" data-testid="edge-clear-log">Clear log</button>
+</div>
+<div id="stats" data-testid="active-count">Active toasts: 0</div>
+<div id="log" data-testid="event-log"></div>
+
+<div id="toastContainer" data-testid="toast-container"></div>
+<div id="checkout" data-testid="checkout-cta">🛒 Proceed to checkout</div>
+
+<script type="module">
+/* ---------- ArToast module (inlined, unmodified logic, for this standalone page) ---------- */
+const MAX_TOASTS = 5, TOAST_ENTER_SETTLE_MS = 1000, TOAST_EXIT_MS = 200, TOAST_LIFETIME_MS = 8000,
+      CTA_DELAY_MS = 2000, CHECKOUT_CLOSE_DELAY_MS = 5000, CHECKOUT_GAP_PX = 30,
+      CONTAINER_BASE_BOTTOM_PX = 20, TOAST_EXIT_GAP_MS = 1000;
+
+const toastConfig = { fields: [{ text: 'Counter increased!', className: 'toast-message' }], custom: null };
+let shownCTA = false, activeToasts = 0, checkoutCloseTimer = null, lastToastExitAt = 0;
+
+function buildFieldEl(field) {
+  const el = document.createElement('div');
+  if (field.className) el.className = field.className;
+  el.textContent = field.text;
+  return el;
+}
+
+function showToast() {
+  const container = document.getElementById('toastContainer');
+  activeToasts++;
+  if (checkoutCloseTimer) { clearTimeout(checkoutCloseTimer); checkoutCloseTimer = null; }
+
+  const el = document.createElement('div');
+  el.className = 'toast';
+  toastConfig.fields.forEach(field => {
+    if (Array.isArray(field)) {
+      const row = document.createElement('div');
+      row.className = 'toast-row';
+      field.forEach(f => row.appendChild(buildFieldEl(f)));
+      el.appendChild(row);
+    } else {
+      el.appendChild(buildFieldEl(field));
+    }
+  });
+  if (toastConfig.custom) {
+    const c = document.createElement('div');
+    c.className = 'toast-custom';
+    if (toastConfig.custom instanceof Node) c.appendChild(toastConfig.custom);
+    else c.textContent = toastConfig.custom;
+    el.appendChild(c);
+  }
+  container.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+
+  el.addEventListener('transitionend', function onEnter(e) {
+    if (e.propertyName !== 'transform') return;
+    el.removeEventListener('transitionend', onEnter);
+    setTimeout(() => {
+      const existing = Array.from(container.children).filter(c => c !== el && !c.classList.contains('exit-right') && !c.dataset.exiting);
+      const overflow = existing.length - (MAX_TOASTS - 1);
+      for (let i = 0; i < overflow; i++) exitToast(existing[i], true);
+    }, TOAST_ENTER_SETTLE_MS);
+  });
+
+  if (!shownCTA) setTimeout(showToastCheckout, CTA_DELAY_MS);
+  setTimeout(() => { if (el.isConnected) exitToast(el, false); }, TOAST_LIFETIME_MS);
+}
+
+function exitToast(el, isOverflow) {
+  if (el.dataset.exiting) return;
+  el.dataset.exiting = 'true';
+  activeToasts--;
+  const run = () => {
+    const elapsed = Date.now() - lastToastExitAt;
+    if (elapsed < TOAST_EXIT_GAP_MS) { setTimeout(run, TOAST_EXIT_GAP_MS - elapsed); return; }
+    lastToastExitAt = Date.now();
+    el.classList.remove('show');
+    if (isOverflow) el.classList.add('exit-right');
+    setTimeout(() => {
+      if (el.isConnected) el.remove();
+      if (!isOverflow) scheduleCheckoutClose();
+    }, TOAST_EXIT_MS);
+  };
+  run();
+}
+
+function showToastCheckout() {
+  const cta = document.getElementById('checkout'), container = document.getElementById('toastContainer');
+  cta.classList.add('showC');
+  container.style.bottom = `${CONTAINER_BASE_BOTTOM_PX + cta.offsetHeight + CHECKOUT_GAP_PX}px`;
+  shownCTA = true;
+}
+
+function scheduleCheckoutClose() {
+  if (activeToasts > 0) return;
+  if (checkoutCloseTimer) clearTimeout(checkoutCloseTimer);
+  checkoutCloseTimer = setTimeout(() => {
+    document.getElementById('checkout').classList.remove('showC');
+    document.getElementById('toastContainer').style.bottom = `${CONTAINER_BASE_BOTTOM_PX}px`;
+    shownCTA = false; checkoutCloseTimer = null;
+  }, CHECKOUT_CLOSE_DELAY_MS);
+}
+
+/* ---------- UAT harness ---------- */
+const products = [
+  { id: 'headphones', name: 'Wireless Headphones', price: 79.99, subtitle: 'One Size' },
+  { id: 'shoes', name: 'Running Shoes', price: 129.99, subtitle: 'UK 10' },
+  { id: 'mugs', name: 'Ceramic Mug Set', price: 24.00, subtitle: '350ml' },
+  { id: 'petcarrier', name: 'Premium All-Weather Travel Pet Carrier Backpack (Airline Approved)', price: 58.50, subtitle: 'Medium', custom: 'badge' },
+  { id: 'lamp', name: 'Desk Lamp', price: 45.00, subtitle: 'Warm White', custom: 'string' },
+  { id: 'bottle', name: 'Water Bottle', price: 18.99, subtitle: null }
+];
+
+function createPetBadge() {
+  const frag = document.createDocumentFragment();
+  const icon = document.createElement('span');
+  icon.className = 'minicart-requirements-icon minicart-requirements-icon-pet';
+  icon.setAttribute('role', 'img');
+  icon.setAttribute('aria-label', 'Pet-friendly');
+  icon.title = 'Pet-friendly';
+  const label = document.createElement('span');
+  label.textContent = 'Pet-friendly';
+  frag.append(icon, label);
+  return frag;
+}
+
+function buildFields(p, qty) {
+  const fields = [{ text: p.name, className: 'toast-title' }];
+  if (p.subtitle) fields.push({ text: p.subtitle, className: 'toast-subtitle' });
+  fields.push([
+    { text: `Qty: ${qty}`, className: 'toast-qty' },
+    { text: `£${p.price.toFixed(2)}`, className: 'toast-price' }
+  ]);
+  return fields;
+}
+
+function addToCart(p, qty) {
+  toastConfig.fields = buildFields(p, qty);
+  toastConfig.custom = p.custom === 'badge' ? createPetBadge()
+                      : p.custom === 'string' ? '⚡ Ships within 24 hours'
+                      : null;
+  showToast();
+}
+
+const grid = document.getElementById('grid');
+products.forEach(p => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.dataset.testid = `product-card-${p.id}`;
+  card.innerHTML = `
+    <div class="name">${p.name}</div>
+    <div class="meta"><span>£${p.price.toFixed(2)}</span><span>${p.subtitle || '—'}</span></div>
+    ${p.custom === 'badge' ? '<span class="hint">🐾 pet badge on add</span>' : ''}
+    ${p.custom === 'string' ? '<span class="hint">⚡ custom string on add</span>' : ''}
+    ${!p.subtitle ? '<span class="hint">no subtitle (edge case)</span>' : ''}
+    <label>Qty <input type="number" min="0" max="9" value="1" data-testid="qty-${p.id}"></label>
+    <button data-testid="add-to-cart-${p.id}">Add to cart</button>
+  `;
+  card.querySelector('button').addEventListener('click', () => {
+    const qty = Number(card.querySelector('input').value) || 0;
+    addToCart(p, qty);
+  });
+  grid.appendChild(card);
+});
+
+document.getElementById('btnOverflow').addEventListener('click', () => {
+  logEvent('— overflow test: firing 6 toasts —');
+  products.forEach((p, i) => setTimeout(() => addToCart(p, 1), i * 150));
+});
+document.getElementById('btnEmpty').addEventListener('click', () => {
+  toastConfig.fields = [];
+  toastConfig.custom = null;
+  showToast();
+});
+document.getElementById('btnRegression').addEventListener('click', () => {
+  logEvent('— custom-slot reset check: badge then plain —');
+  addToCart(products.find(p => p.id === 'petcarrier'), 1);
+  setTimeout(() => addToCart(products.find(p => p.id === 'headphones'), 1), 300);
+});
+document.getElementById('btnClearLog').addEventListener('click', () => {
+  document.getElementById('log').textContent = '';
+});
+
+/* live event log via MutationObserver — observes arToast's own DOM output, no module changes needed */
+const logEl = document.getElementById('log');
+const t0 = Date.now();
+function logEvent(msg) {
+  const line = document.createElement('div');
+  line.textContent = `+${((Date.now() - t0) / 1000).toFixed(2)}s  ${msg}`;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+  document.getElementById('stats').textContent = `Active toasts: ${document.querySelectorAll('#toastContainer .toast').length}`;
+}
+
+new MutationObserver(muts => {
+  const seen = new Set();
+  muts.forEach(m => {
+    if (m.type === 'childList') {
+      m.addedNodes.forEach(n => n.classList?.contains('toast') &&
+        logEvent(`toast added — "${(n.querySelector('.toast-title,.toast-message') || n).textContent.trim().slice(0, 34) || 'empty'}"`));
+      m.removedNodes.forEach(n => n.classList?.contains('toast') && logEvent('toast removed from DOM'));
+    } else if (m.attributeName === 'class' && m.target.classList.contains('toast')) {
+      if (seen.has(m.target)) return;
+      seen.add(m.target);
+      const c = m.target.classList;
+      logEvent(c.contains('show') ? 'toast entered' : c.contains('exit-right') ? 'toast evicted (overflow)' : 'toast exiting (expired)');
+    }
+  });
+}).observe(document.getElementById('toastContainer'), { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+
+let checkoutOpen = false;
+new MutationObserver(() => {
+  const open = document.getElementById('checkout').classList.contains('showC');
+  if (open === checkoutOpen) return;
+  checkoutOpen = open;
+  logEvent(open ? 'checkout CTA opened' : 'checkout CTA closed');
+}).observe(document.getElementById('checkout'), { attributes: true, attributeFilter: ['class'] });
+</script>
+</body>
+</html>
