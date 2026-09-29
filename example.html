@@ -1,333 +1,1372 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ArToast — UAT</title>
+<title>arToast.js — Showcase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,400..800&display=swap">
 <style>
 :root {
-  box-sizing: border-box;
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  --bg: #f4f5f7; --fg: #1a1a1a; --card: #ffffff; --border: #e2e4e8;
-  --muted: #666; --accent: #0a7c2f; --toast-bg: #1a1a1a; --toast-fg: #fff;
-  --log-bg: #10151c; --log-fg: #9fe6a0;
+  --paper: #e8e3d6;
+  --card: #f4f0e6;
+  --ink: #16211b;
+  --muted: #4b574f;
+  --moss: #2e5b45;
+  --moss-soft: #bfd3c4;
+  --signal: #c2342e;
+  --font-body: "Fraunces", georgia, serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
+
+  color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #14161a; --fg: #eee; --card: #1f2228; --border: #2e323a; --muted: #9aa0aa;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) 45vh env(safe-area-inset-left);
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 1.0625rem/1.55 var(--font-body);
+}
+
+:focus-visible {
+  outline: 3px solid var(--signal);
+  outline-offset: 2px;
+}
+
+.skip {
+  position: absolute;
+  top: 0.5rem;
+  left: -100vw;
+  z-index: 2000;
+  padding: 0.6rem 1rem;
+  background: var(--ink);
+  color: var(--card);
+  font: 500 0.8125rem var(--font-mono);
+}
+
+.skip:focus {
+  left: 0.5rem;
+}
+
+code {
+  padding: 0.05em 0.35em;
+  background: var(--paper);
+  font: 400 0.85em var(--font-mono);
+}
+
+/* ---------- Layout ---------- */
+.shell {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 1.25rem;
+}
+
+@media (width >= 860px) {
+  .shell {
+    grid-template-columns: 15rem 1fr;
+    align-items: start;
+    padding: 2.5rem 2rem;
+  }
+
+  .masthead {
+    grid-column: 1 / -1;
   }
 }
-:root[data-theme="dark"] {
-  --bg: #14161a; --fg: #eee; --card: #1f2228; --border: #2e323a; --muted: #9aa0aa;
-}
-html { scroll-padding-top: env(safe-area-inset-top, 0px); }
-* { box-sizing: border-box; }
-body {
-  margin: 0; background: var(--bg); color: var(--fg);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  padding: 16px 16px 150px;
-}
-h1 { font-size: 1.25rem; margin: 4px 0 2px; }
-h2 { font-size: 1rem; margin: 22px 0 10px; }
-p.sub { color: var(--muted); margin: 0 0 18px; font-size: .88rem; line-height: 1.4; }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
-.card {
-  background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px;
-  display: flex; flex-direction: column; gap: 6px;
-}
-.card .name { font-weight: 600; font-size: .92rem; line-height: 1.25; }
-.card .meta { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: .82rem; }
-.card .hint { font-size: .75rem; color: var(--muted); }
-.card label { font-size: .78rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-.card input[type=number] {
-  width: 56px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px;
-  background: var(--bg); color: var(--fg);
-}
-.card button {
-  margin-top: 4px; padding: 8px; border: none; border-radius: 8px; background: var(--fg); color: var(--bg);
-  font-weight: 600; font-size: .85rem; cursor: pointer;
-}
-.edge-row { display: flex; flex-wrap: wrap; gap: 8px; }
-.edge-row button {
-  padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card);
-  color: var(--fg); font-size: .82rem; cursor: pointer;
-}
-#stats { font-size: .82rem; color: var(--muted); margin-top: 8px; }
-#log {
-  margin-top: 6px; background: var(--log-bg); color: var(--log-fg); border-radius: 8px; padding: 10px;
-  font: 11px/1.5 ui-monospace, Menlo, monospace; height: 160px; overflow-y: auto;
-  white-space: pre-wrap; overflow-wrap: anywhere;
+
+.eyebrow {
+  margin: 0 0 0.25rem;
+  color: var(--moss);
+  font: 500 0.75rem var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-/* --- ArToast styles --- */
+h1 {
+  margin: 0;
+  font-size: clamp(2.75rem, 10vw, 5.5rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+h1 span {
+  color: var(--moss);
+  font-style: italic;
+  font-weight: 500;
+}
+
+.lede {
+  margin: 0;
+  color: var(--muted);
+}
+
+.masthead .lede {
+  margin: 0.5rem 0 1rem;
+  font-size: 1.15rem;
+  font-style: italic;
+}
+
+.specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.specs div {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  border: 2px solid var(--ink);
+  font: 400 0.75rem var(--font-mono);
+}
+
+.specs dt {
+  color: var(--muted);
+}
+
+.specs dd {
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ---------- Tabs ---------- */
+.index {
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+  border-bottom: 2px solid var(--ink);
+}
+
+.tab {
+  display: flex;
+  flex: none;
+  gap: 0.75rem;
+  align-items: baseline;
+  min-height: 44px;
+  padding: 0.7rem 0.9rem;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: 500 0.8125rem var(--font-mono);
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tab-num {
+  color: var(--moss);
+}
+
+.tab:hover {
+  background: var(--moss-soft);
+}
+
+.tab[aria-selected="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.tab[aria-selected="true"] .tab-num {
+  color: var(--moss-soft);
+}
+
+@media (width >= 860px) {
+  .index {
+    flex-direction: column;
+    overflow: visible;
+    border-right: 2px solid var(--ink);
+    border-bottom: 0;
+  }
+
+  .tab {
+    width: 100%;
+  }
+}
+
+/* ---------- Panels ---------- */
+.panel {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 2px solid var(--ink);
+  background: var(--card);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 4.5vw, 2.1rem);
+  line-height: 1.1;
+}
+
+h3 {
+  margin: 0;
+  color: var(--moss);
+  font: 500 0.75rem var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sub {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 2px dashed var(--ink);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.8rem;
+  align-items: end;
+}
+
+.field {
+  display: grid;
+  gap: 0.3rem;
+  color: var(--muted);
+  font: 500 0.75rem var(--font-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.field input,
+.field select {
+  min-height: 44px;
+  padding: 0.5rem 0.7rem;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 1rem var(--font-body);
+}
+
+.btn {
+  min-height: 44px;
+  padding: 0.55rem 1rem;
+  border: 2px solid var(--ink);
+  background: var(--ink);
+  color: var(--card);
+  font: 500 0.8125rem/1.2 var(--font-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.btn:hover {
+  border-color: var(--moss);
+  background: var(--moss);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+}
+
+.btn-ghost:hover {
+  border-color: var(--ink);
+  background: var(--moss-soft);
+}
+
+.btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.switch {
+  display: inline-flex;
+  gap: 0.75rem;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: 500 0.8125rem var(--font-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.switch-track {
+  position: relative;
+  width: 3rem;
+  height: 1.6rem;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+}
+
+.switch-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1.1rem;
+  height: 1.1rem;
+  background: var(--ink);
+  transition: transform 0.15s ease;
+}
+
+.switch[aria-checked="true"] .switch-track {
+  background: var(--moss);
+}
+
+.switch[aria-checked="true"] .switch-track::after {
+  background: var(--card);
+  transform: translateX(1.4rem);
+}
+
+pre {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  overflow-x: auto;
+  background: var(--ink);
+  color: var(--paper);
+  font: 400 0.8125rem/1.5 var(--font-mono);
+}
+
+pre code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+}
+
+.note {
+  margin: 0;
+  padding: 0.4rem 0.9rem;
+  border-left: 4px solid var(--moss);
+  background: var(--paper);
+  font-size: 0.95rem;
+}
+
+.note-warn {
+  border-left-color: var(--signal);
+}
+
+.steps {
+  margin: 0;
+  padding-left: 1.4rem;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.stat {
+  padding: 0.5rem 0.7rem;
+  border: 2px solid var(--ink);
+}
+
+.stat dt {
+  color: var(--muted);
+  font: 500 0.6875rem var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stat dd {
+  margin: 0;
+  font: 500 1.3rem var(--font-mono);
+}
+
+.log {
+  max-height: 14rem;
+  margin: 0;
+  padding: 0.6rem;
+  overflow-y: auto;
+  background: var(--ink);
+  color: var(--paper);
+  font: 400 0.75rem/1.6 var(--font-mono);
+  list-style: none;
+}
+
+.log:empty::before {
+  content: "Waiting for events…";
+  color: #8fa196;
+}
+
+.log li {
+  padding-left: 0.5rem;
+  border-left: 3px solid #8fa196;
+}
+
+.log time {
+  margin-right: 0.4rem;
+  color: #8fa196;
+}
+
+.log .ev-add {
+  border-left-color: var(--moss-soft);
+}
+
+.log .ev-evict {
+  border-left-color: #ff9d94;
+}
+
+.log .ev-cta {
+  border-left-color: #d9cfa8;
+}
+
+/* ---------- arToast starter CSS ---------- */
+/* stylelint-disable selector-id-pattern, selector-class-pattern -- names mandated by arToast.js */
 #toastContainer {
-  position: fixed; left: 16px; bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  display: flex; flex-direction: column; gap: 8px; transition: bottom .2s ease;
-  z-index: 1000; width: min(320px, calc(100vw - 32px));
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: bottom 0.2s ease;
 }
+
 .toast {
-  background: var(--toast-bg); color: var(--toast-fg); padding: 12px 14px; border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.2); transform: translateX(-120%); opacity: 0;
-  transition: transform .2s ease, opacity .2s ease;
+  min-width: 14rem;
+  max-width: min(22rem, calc(100vw - 40px));
+  padding: 12px 16px;
+  border-left: 4px solid var(--moss-soft);
+  border-radius: 8px;
+  background: var(--ink);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+  color: var(--card);
+  font: 400 0.9rem/1.4 var(--font-body);
+  opacity: 0;
+  transform: translateX(-120%);
+  transition: transform 0.2s ease, opacity 0.2s ease;
 }
-.toast.show { transform: translateX(0); opacity: 1; }
-.toast.exit-right { transform: translateX(120%); opacity: 0; }
-.toast-title { font-weight: 700; font-size: .95rem; }
-.toast-subtitle { font-size: .8rem; opacity: .75; margin-top: 2px; }
-.toast-row { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
-.toast-qty { font-size: .8rem; opacity: .8; }
-.toast-price { font-weight: 600; }
-.toast-custom { margin-top: 6px; font-size: .8rem; display: flex; align-items: center; gap: 6px; }
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast.exit-right {
+  opacity: 0;
+  transform: translateX(120%);
+}
+
+.toast-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toast-custom {
+  margin-top: 4px;
+  font-size: 0.8rem;
+}
+
+.toast-message {
+  font-weight: 600;
+}
+
+.toast-success {
+  color: #9be0b1;
+}
+
+.toast-alert {
+  color: #ff9d94;
+}
+
+.toast-info {
+  color: #d9cfa8;
+}
+
+.toast-title {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.toast-subtitle {
+  color: #b9c4bb;
+  font-size: 0.85rem;
+}
+
+.toast-timestamp {
+  margin-top: 0.15rem;
+  color: #8fa196;
+  font: 400 0.7rem var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+.toast-qty {
+  color: #b9c4bb;
+  font: 500 0.8rem var(--font-mono);
+}
+
+.toast-price {
+  font: 700 0.95rem var(--font-mono);
+}
+
+.custom-row,
+.promo,
+.stars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.toast-btn {
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid var(--moss-soft);
+  background: transparent;
+  color: var(--card);
+  font: 500 0.75rem var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.toast-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.toast-btn:hover:not(:disabled) {
+  background: var(--moss);
+}
+
+.toast-custom code {
+  background: #2a3a31;
+  color: var(--card);
+}
+
+.star {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #8fa196;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.star.on {
+  color: #d9cfa8;
+}
 
 #checkout {
-  position: fixed; left: 16px; bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  background: var(--accent); color: #fff; padding: 10px 14px; border-radius: 8px;
-  transform: translateY(120%); opacity: 0; transition: transform .25s ease, opacity .25s ease;
-  font-size: .85rem; font-weight: 600; width: min(320px, calc(100vw - 32px));
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 999;
+  width: min(22rem, calc(100vw - 40px));
+  padding: 12px 16px;
+  border: 2px solid var(--ink);
+  background: var(--card);
+  box-shadow: 4px 4px 0 var(--ink);
+  color: var(--ink);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(120%);
+  transition: transform 0.25s ease, opacity 0.25s ease, visibility 0s linear 0.25s;
+  visibility: hidden;
 }
-#checkout.showC { transform: translateY(0); opacity: 1; }
 
-.minicart-requirements-icon-pet {
-  width: 20px; height: 20px; border-radius: 50%; display: inline-block; position: relative;
-  border: 1px solid rgb(77,77,77); outline: 1px solid rgb(204,38,67); font-size: 0; cursor: pointer;
-  flex: none; background: var(--card);
+#checkout.showC {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition-delay: 0s;
+  visibility: visible;
 }
-.minicart-requirements-icon-pet::before {
-  content: '🐾'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-size: 11px; line-height: 1;
+
+.co-eyebrow {
+  margin: 0;
+  color: var(--moss);
+  font: 500 0.7rem var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
+
+.co-line {
+  min-height: 2.8em;
+  margin: 0.15rem 0 0.6rem;
+  line-height: 1.4;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .toast, #checkout, #toastContainer { transition-duration: .01s; }
+  /* Keep a real (tiny) transform transition: the module waits on `transitionend` for it. */
+  .toast,
+  #checkout,
+  #toastContainer,
+  .switch-track::after {
+    transition-duration: 0.01s;
+  }
 }
+/* stylelint-enable selector-id-pattern, selector-class-pattern */
 </style>
 </head>
 <body>
+<a class="skip" href="#stage">Skip to demos</a>
 
-<h1>🍞 ArToast UAT</h1>
+<div class="shell">
+  <header class="masthead">
+    <p class="eyebrow">Component showcase</p>
+    <h1>arToast<span>.js</span></h1>
+    <p class="lede">A dependency-free toast module. Six demos, every edge case.</p>
+    <dl class="specs" aria-label="Module constants">
+      <div><dt>MAX_TOASTS</dt><dd>5</dd></div>
+      <div><dt>TOAST_LIFETIME_MS</dt><dd>8000</dd></div>
+      <div><dt>CTA_DELAY_MS</dt><dd>2000</dd></div>
+      <div><dt>CHECKOUT_CLOSE_DELAY_MS</dt><dd>5000</dd></div>
+      <div><dt>TOAST_EXIT_GAP_MS</dt><dd>1000</dd></div>
+    </dl>
+  </header>
 
-<h2>Products</h2>
-<div class="grid" id="grid" data-testid="product-grid"></div>
+  <div class="index" role="tablist" aria-label="Demos" aria-orientation="horizontal">
+    <button class="tab" type="button" role="tab" id="tab-1" aria-controls="panel-1" aria-selected="true"><span class="tab-num">01</span>Basic</button>
+    <button class="tab" type="button" role="tab" id="tab-2" aria-controls="panel-2" aria-selected="false" tabindex="-1"><span class="tab-num">02</span>Multi-field</button>
+    <button class="tab" type="button" role="tab" id="tab-3" aria-controls="panel-3" aria-selected="false" tabindex="-1"><span class="tab-num">03</span>Row groups</button>
+    <button class="tab" type="button" role="tab" id="tab-4" aria-controls="panel-4" aria-selected="false" tabindex="-1"><span class="tab-num">04</span>Custom slot</button>
+    <button class="tab" type="button" role="tab" id="tab-5" aria-controls="panel-5" aria-selected="false" tabindex="-1"><span class="tab-num">05</span>Stress test</button>
+    <button class="tab" type="button" role="tab" id="tab-6" aria-controls="panel-6" aria-selected="false" tabindex="-1"><span class="tab-num">06</span>Checkout CTA</button>
+  </div>
 
-<h2>Edge cases</h2>
-<div class="edge-row">
-  <button id="btnOverflow" data-testid="edge-overflow">Fire 6 toasts (overflow)</button>
-  <button id="btnEmpty" data-testid="edge-empty">Empty toast (no fields)</button>
-  <button id="btnRegression" data-testid="edge-regression">Badge → plain (custom reset check)</button>
-  <button id="btnClearLog" data-testid="edge-clear-log">Clear log</button>
+  <main class="stage" id="stage" tabindex="-1">
+
+    <!-- 01 -->
+    <section class="panel" role="tabpanel" id="panel-1" aria-labelledby="tab-1">
+      <h2>Basic &amp; single-field toasts</h2>
+      <p class="lede">One field per toast, set through <code>toastConfig.fields</code>.</p>
+      <div class="row">
+        <button class="btn" type="button" data-demo="success">Success</button>
+        <button class="btn" type="button" data-demo="alert">Alert</button>
+        <button class="btn" type="button" data-demo="info">Info</button>
+        <button class="btn btn-ghost" type="button" data-demo="default">ArToast.show() — defaults</button>
+        <button class="btn btn-ghost" type="button" data-demo="literal">Literal HTML text</button>
+      </div>
+      <form class="form" id="form-basic">
+        <label class="field">Message<input name="text" value="Profile updated" required></label>
+        <label class="field">Style
+          <select name="tone">
+            <option value="success">success</option>
+            <option value="alert">alert</option>
+            <option value="info">info</option>
+            <option value="">plain</option>
+          </select>
+        </label>
+        <button class="btn" type="submit">Fire toast</button>
+      </form>
+      <pre tabindex="0" aria-label="Code sample"><code>toastConfig.fields = [{ text: 'Saved successfully', className: 'toast-message toast-success' }];
+toastConfig.custom = null;
+showToast();</code></pre>
+      <p class="note"><code>ArToast.show()</code> with an untouched config renders the built-in default message. <code>text</code> goes through <code>textContent</code>, so the “Literal HTML” button prints its tags instead of rendering them.</p>
+    </section>
+
+    <!-- 02 -->
+    <section class="panel" role="tabpanel" id="panel-2" aria-labelledby="tab-2" hidden>
+      <h2>Multi-field &amp; vertical stacking</h2>
+      <p class="lede">Each field becomes its own line with its own class: <code>.toast-title</code>, <code>.toast-subtitle</code>, <code>.toast-timestamp</code>.</p>
+      <form class="form" id="form-detail">
+        <label class="field">Title<input name="heading" value="Order shipped" required></label>
+        <label class="field">Description<input name="desc" value="Your parcel is on its way."></label>
+        <label class="field">Timestamp<input name="ts"></label>
+        <button class="btn btn-ghost" type="button" data-demo="now">Timestamp: now</button>
+        <button class="btn" type="submit">Fire toast</button>
+      </form>
+      <pre tabindex="0" aria-label="Code sample"><code>toastConfig.fields = [
+  { text: 'Order shipped', className: 'toast-title' },
+  { text: 'Your parcel is on its way.', className: 'toast-subtitle' },
+  { text: '09/29/2026 14:05', className: 'toast-timestamp' }
+];</code></pre>
+      <p class="note">Empty description/timestamp inputs are dropped from the array before firing; the module would otherwise render empty lines.</p>
+    </section>
+
+    <!-- 03 -->
+    <section class="panel" role="tabpanel" id="panel-3" aria-labelledby="tab-3" hidden>
+      <h2>Row grouping</h2>
+      <p class="lede">Wrap fields in a nested array to put them side by side in a <code>.toast-row</code>.</p>
+      <form class="form" id="form-cart">
+        <label class="field">Item
+          <select name="product">
+            <option value="headphones">Wireless Headphones · $79.99</option>
+            <option value="hub">USB-C Hub · $34.50</option>
+            <option value="lamp">Desk Lamp · $42.00</option>
+          </select>
+        </label>
+        <label class="field">Quantity<input name="qty" type="number" min="1" max="9" value="2" required></label>
+        <button class="btn" type="submit">Add to cart</button>
+      </form>
+      <div class="row">
+        <button class="btn btn-ghost" type="button" data-demo="spec">Spec example: Qty 2 + $79.99</button>
+        <button class="btn btn-ghost" type="button" data-demo="summary">Two rows</button>
+        <button class="btn btn-ghost" type="button" data-demo="triple">Three cells in one row</button>
+      </div>
+      <pre tabindex="0" aria-label="Code sample"><code>toastConfig.fields = [
+  { text: 'Wireless Headphones', className: 'toast-title' },
+  [
+    { text: 'Qty: 2', className: 'toast-qty' },
+    { text: '$79.99', className: 'toast-price' }
+  ]
+];</code></pre>
+      <p class="note">The form shows the line total (unit price × quantity) in the price cell.</p>
+    </section>
+
+    <!-- 04 -->
+    <section class="panel" role="tabpanel" id="panel-4" aria-labelledby="tab-4" hidden>
+      <h2>Custom content slot</h2>
+      <p class="lede"><code>toastConfig.custom</code> takes a string or a DOM Node, appended after the fields in <code>.toast-custom</code>.</p>
+
+      <div class="sub">
+        <h3>A · Plain string</h3>
+        <form class="form" id="form-custom">
+          <label class="field">Custom string<input name="custom" value="Free shipping applied to this order"></label>
+          <button class="btn" type="submit">Fire toast</button>
+        </form>
+        <pre tabindex="0" aria-label="Code sample"><code>toastConfig.custom = 'Free shipping applied to this order';</code></pre>
+      </div>
+
+      <div class="sub">
+        <h3>B · DOM Node, built fresh per call</h3>
+        <div class="row">
+          <button class="btn" type="button" data-demo="undo">Undo button</button>
+          <button class="btn" type="button" data-demo="promo">Promo code banner</button>
+          <button class="btn" type="button" data-demo="stars">Rating stars</button>
+        </div>
+        <pre tabindex="0" aria-label="Code sample"><code>const btn = document.createElement('button');
+btn.addEventListener('click', () =&gt; { /* … */ });
+toastConfig.custom = btn;   // a new node every time
+showToast();</code></pre>
+      </div>
+
+      <div class="sub">
+        <h3>Edge cases</h3>
+        <div class="row">
+          <button class="btn btn-ghost" type="button" data-demo="reuse">Reuse one node in two toasts</button>
+          <button class="btn btn-ghost" type="button" data-demo="leak">Skip the reset (stale custom)</button>
+        </div>
+        <p class="note note-warn">Reuse: the node moves out of the first toast into the second, leaving an empty <code>.toast-custom</code> behind. Skip the reset: <code>custom</code> is never cleared by the module, so the second toast inherits the first one's string. The other buttons on this site avoid both by resetting <code>custom</code> on every call.</p>
+        <p class="note note-warn">Interactive toasts still auto-dismiss at 8000 ms. The module has no pause-on-hover or pause-on-focus.</p>
+      </div>
+    </section>
+
+    <!-- 05 -->
+    <section class="panel" role="tabpanel" id="panel-5" aria-labelledby="tab-5" hidden>
+      <h2>Stress test &amp; overflow eviction</h2>
+      <p class="lede">Fires a burst past <code>MAX_TOASTS</code>. Oldest toasts leave through <code>.exit-right</code>, spaced by <code>TOAST_EXIT_GAP_MS</code>.</p>
+      <form class="form" id="form-burst">
+        <label class="field">Toasts<input name="count" type="number" min="2" max="20" value="8" required></label>
+        <label class="field">Interval (ms)<input name="gap" type="number" min="0" max="2000" step="50" value="250" required></label>
+        <button class="btn" type="submit" id="burstBtn">Burst trigger</button>
+      </form>
+      <dl class="stats" aria-label="Live counters">
+        <div class="stat"><dt>On screen</dt><dd data-stat="onscreen">0</dd></div>
+        <div class="stat"><dt>Peak</dt><dd data-stat="peak">0</dd></div>
+        <div class="stat"><dt>Exit queued</dt><dd data-stat="exiting">0</dd></div>
+      </dl>
+      <h3>Event log · observed from the DOM</h3>
+      <ol class="log" data-log tabindex="0" aria-label="Event log"></ol>
+      <div class="row"><button class="btn btn-ghost" type="button" data-demo="clear">Clear log &amp; peak</button></div>
+      <p class="note">Eviction runs 1000 ms after the newest toast finishes its <code>transform</code> transition, so “On screen” can briefly exceed 5. Evicted and expired toasts share the same 1000 ms exit gap, so a batch created together also expires one second apart.</p>
+      <p class="note note-warn">If your CSS removes the <code>transform</code> transition, <code>transitionend</code> never fires and overflow eviction never runs. Lifetime expiry still works.</p>
+    </section>
+
+    <!-- 06 -->
+    <section class="panel" role="tabpanel" id="panel-6" aria-labelledby="tab-6" hidden>
+      <h2>Cross-sell / checkout CTA</h2>
+      <p class="lede">The <code>#checkout</code> drawer slides in 2000 ms after a toast appears and pushes <code>#toastContainer</code> up.</p>
+      <div class="row">
+        <button class="switch" type="button" role="switch" aria-checked="false" id="flowSwitch"><span class="switch-track" aria-hidden="true"></span>Checkout flow active</button>
+      </div>
+      <div class="row">
+        <button class="btn" type="button" data-demo="addcart">Add item to cart</button>
+        <button class="btn btn-ghost" type="button" data-demo="single">Fire one toast</button>
+        <button class="btn btn-ghost" type="button" data-demo="clear">Clear log &amp; peak</button>
+      </div>
+      <dl class="stats" aria-label="Live counters">
+        <div class="stat"><dt>#checkout</dt><dd data-stat="cta">closed</dd></div>
+        <div class="stat"><dt>Drawer height</dt><dd data-stat="cta-h">0px</dd></div>
+        <div class="stat"><dt>Container bottom</dt><dd data-stat="bottom">20px</dd></div>
+        <div class="stat"><dt>On screen</dt><dd data-stat="onscreen">0</dd></div>
+      </dl>
+      <h3>Event log · observed from the DOM</h3>
+      <ol class="log" data-log tabindex="0" aria-label="Event log"></ol>
+      <ol class="steps">
+        <li>First toast → 2000 ms later <code>#checkout</code> gets <code>.showC</code>.</li>
+        <li>Container <code>bottom</code> = 20 + drawer height + 10 px.</li>
+        <li>Last toast expires → 5000 ms later <code>.showC</code> is removed and <code>bottom</code> returns to 20 px.</li>
+      </ol>
+      <p class="note">Firing a toast inside that 5000 ms window cancels the close. Overflow evictions do not start the close timer; only normal expiries do.</p>
+      <p class="note note-warn">The drawer height is measured once, when it opens. The module does not re-shift the container if the drawer's content changes size afterwards.</p>
+    </section>
+
+  </main>
 </div>
-<div id="stats" data-testid="active-count">Active toasts: 0</div>
-<div id="log" data-testid="event-log"></div>
 
-<div id="toastContainer" data-testid="toast-container"></div>
-<div id="checkout" data-testid="checkout-cta">🛒 Proceed to checkout</div>
+<div id="toastContainer" role="status" aria-live="polite" aria-atomic="false" aria-label="Notifications"></div>
+
+<div id="checkout" role="complementary" aria-label="Checkout offer">
+  <p class="co-eyebrow" id="coEyebrow">Complete the set</p>
+  <p class="co-line" id="coLine">Add a carry case for 15% off today.</p>
+  <button class="btn" type="button" id="coBtn">Add case · $19.99</button>
+</div>
+
+<script>
+/* Tabs: plain script, independent of the toast module */
+(() => {
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const tabs = $$('[role="tab"]');
+const tablist = $('[role="tablist"]');
+
+function selectTab(tab, focus = false) {
+  tabs.forEach(t => {
+    const on = t === tab;
+    t.setAttribute('aria-selected', String(on));
+    t.tabIndex = on ? 0 : -1;
+    document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+  });
+  if (focus) tab.focus();
+}
+
+tabs.forEach(t => t.addEventListener('click', () => selectTab(t)));
+tablist.addEventListener('keydown', e => {
+  const i = tabs.indexOf(document.activeElement);
+  if (i < 0) return;
+  const target = {
+    ArrowRight: i + 1, ArrowDown: i + 1,
+    ArrowLeft: i - 1, ArrowUp: i - 1,
+    Home: 0, End: tabs.length - 1
+  }[e.key];
+  if (target === undefined) return;
+  e.preventDefault();
+  selectTab(tabs[(target + tabs.length) % tabs.length], true);
+});
+
+const wide = matchMedia('(width >= 860px)');
+const syncOrientation = () => tablist.setAttribute('aria-orientation', wide.matches ? 'vertical' : 'horizontal');
+wide.addEventListener('change', syncOrientation);
+syncOrientation();
+})();
+</script>
 
 <script type="module">
-/* ---------- ArToast module (inlined, unmodified logic, for this standalone page) ---------- */
-const MAX_TOASTS = 5, TOAST_ENTER_SETTLE_MS = 1000, TOAST_EXIT_MS = 200, TOAST_LIFETIME_MS = 8000,
-      CTA_DELAY_MS = 2000, CHECKOUT_CLOSE_DELAY_MS = 5000, CHECKOUT_GAP_PX = 30,
-      CONTAINER_BASE_BOTTOM_PX = 20, TOAST_EXIT_GAP_MS = 1000;
+/* ===== arToast.js (inlined verbatim; export keywords removed) ===== */
+/**
+ * ArToast
+ * A lightweight, dependency-free toast notification module with
+ * configurable content and an optional checkout/cross-sell CTA that
+ * appears while toasts are active.
+ *
+ * Required markup in the consuming page:
+ *   <div id="toastContainer"></div>
+ *   <div id="checkout">...</div>   (only needed if you use the CTA)
+ */
 
-const toastConfig = { fields: [{ text: 'Counter increased!', className: 'toast-message' }], custom: null };
-let shownCTA = false, activeToasts = 0, checkoutCloseTimer = null, lastToastExitAt = 0;
+const MAX_TOASTS = 5;
+const TOAST_ENTER_SETTLE_MS = 1000;
+const TOAST_EXIT_MS = 200;
+const TOAST_LIFETIME_MS = 8000;
+const CTA_DELAY_MS = 2000;
+const CHECKOUT_CLOSE_DELAY_MS = 5000;
+const CHECKOUT_GAP_PX = 10;
+const CONTAINER_BASE_BOTTOM_PX = 20;
+const TOAST_EXIT_GAP_MS = 1000;
+
+/**
+ * Mutable config, read fresh each time showToast() is called.
+ *   fields: array of { text, className } — wrap a group of fields in []
+ *           to render them together on a shared row (e.g. qty + price).
+ *   custom: optional string or DOM Node appended after the fields.
+ *           Leave null (default) to omit the block entirely.
+ */
+const toastConfig = {
+  fields: [
+    { text: 'Counter increased! (Reactive state changed)', className: 'toast-message' }
+  ],
+  custom: null
+};
+
+let shownCTA = false;
+let activeToasts = 0;
+let checkoutCloseTimer = null;
+let lastToastExitAt = 0;
 
 function buildFieldEl(field) {
-  const el = document.createElement('div');
-  if (field.className) el.className = field.className;
-  el.textContent = field.text;
-  return el;
+  const fieldEl = document.createElement('div');
+  if (field.className) fieldEl.className = field.className;
+  fieldEl.textContent = field.text;
+  return fieldEl;
 }
 
 function showToast() {
   const container = document.getElementById('toastContainer');
+
   activeToasts++;
-  if (checkoutCloseTimer) { clearTimeout(checkoutCloseTimer); checkoutCloseTimer = null; }
+
+  if (checkoutCloseTimer) {
+    clearTimeout(checkoutCloseTimer);
+    checkoutCloseTimer = null;
+  }
 
   const el = document.createElement('div');
   el.className = 'toast';
+
   toastConfig.fields.forEach(field => {
     if (Array.isArray(field)) {
-      const row = document.createElement('div');
-      row.className = 'toast-row';
-      field.forEach(f => row.appendChild(buildFieldEl(f)));
-      el.appendChild(row);
+      const rowEl = document.createElement('div');
+      rowEl.className = 'toast-row';
+      field.forEach(subField => rowEl.appendChild(buildFieldEl(subField)));
+      el.appendChild(rowEl);
     } else {
       el.appendChild(buildFieldEl(field));
     }
   });
+
   if (toastConfig.custom) {
-    const c = document.createElement('div');
-    c.className = 'toast-custom';
-    if (toastConfig.custom instanceof Node) c.appendChild(toastConfig.custom);
-    else c.textContent = toastConfig.custom;
-    el.appendChild(c);
+    const customEl = document.createElement('div');
+    customEl.className = 'toast-custom';
+    if (toastConfig.custom instanceof Node) {
+      customEl.appendChild(toastConfig.custom);
+    } else {
+      customEl.textContent = toastConfig.custom;
+    }
+    el.appendChild(customEl);
   }
+
   container.appendChild(el);
+
   requestAnimationFrame(() => el.classList.add('show'));
 
   el.addEventListener('transitionend', function onEnter(e) {
     if (e.propertyName !== 'transform') return;
     el.removeEventListener('transitionend', onEnter);
+
     setTimeout(() => {
       const existing = Array.from(container.children).filter(c => c !== el && !c.classList.contains('exit-right') && !c.dataset.exiting);
       const overflow = existing.length - (MAX_TOASTS - 1);
-      for (let i = 0; i < overflow; i++) exitToast(existing[i], true);
+
+      for (let i = 0; i < overflow; i++) {
+        exitToast(existing[i], true);
+      }
     }, TOAST_ENTER_SETTLE_MS);
   });
 
-  if (!shownCTA) setTimeout(showToastCheckout, CTA_DELAY_MS);
-  setTimeout(() => { if (el.isConnected) exitToast(el, false); }, TOAST_LIFETIME_MS);
+  if (!shownCTA) {
+    setTimeout(() => {
+      showToastCheckout();
+    }, CTA_DELAY_MS);
+  }
+
+  setTimeout(() => {
+    if (el.isConnected) exitToast(el, false);
+  }, TOAST_LIFETIME_MS);
 }
 
 function exitToast(el, isOverflow) {
   if (el.dataset.exiting) return;
   el.dataset.exiting = 'true';
   activeToasts--;
+
   const run = () => {
     const elapsed = Date.now() - lastToastExitAt;
-    if (elapsed < TOAST_EXIT_GAP_MS) { setTimeout(run, TOAST_EXIT_GAP_MS - elapsed); return; }
+
+    if (elapsed < TOAST_EXIT_GAP_MS) {
+      setTimeout(run, TOAST_EXIT_GAP_MS - elapsed);
+      return;
+    }
+
     lastToastExitAt = Date.now();
     el.classList.remove('show');
     if (isOverflow) el.classList.add('exit-right');
+
     setTimeout(() => {
       if (el.isConnected) el.remove();
       if (!isOverflow) scheduleCheckoutClose();
     }, TOAST_EXIT_MS);
   };
+
   run();
 }
 
 function showToastCheckout() {
-  const cta = document.getElementById('checkout'), container = document.getElementById('toastContainer');
-  cta.classList.add('showC');
-  container.style.bottom = `${CONTAINER_BASE_BOTTOM_PX + cta.offsetHeight + CHECKOUT_GAP_PX}px`;
+  const toastCheck = document.getElementById('checkout');
+  const container = document.getElementById('toastContainer');
+
+  toastCheck.classList.add('showC');
+  const shift = toastCheck.offsetHeight + CHECKOUT_GAP_PX;
+  container.style.bottom = `${CONTAINER_BASE_BOTTOM_PX + shift}px`;
   shownCTA = true;
 }
 
 function scheduleCheckoutClose() {
   if (activeToasts > 0) return;
-  if (checkoutCloseTimer) clearTimeout(checkoutCloseTimer);
+
+  if (checkoutCloseTimer) {
+    clearTimeout(checkoutCloseTimer);
+  }
+
   checkoutCloseTimer = setTimeout(() => {
-    document.getElementById('checkout').classList.remove('showC');
-    document.getElementById('toastContainer').style.bottom = `${CONTAINER_BASE_BOTTOM_PX}px`;
-    shownCTA = false; checkoutCloseTimer = null;
+    const toastCheck = document.getElementById('checkout');
+    const container = document.getElementById('toastContainer');
+
+    toastCheck.classList.remove('showC');
+    container.style.bottom = `${CONTAINER_BASE_BOTTOM_PX}px`;
+    shownCTA = false;
+    checkoutCloseTimer = null;
   }, CHECKOUT_CLOSE_DELAY_MS);
 }
 
-/* ---------- UAT harness ---------- */
-const products = [
-  { id: 'headphones', name: 'Wireless Headphones', price: 79.99, subtitle: 'One Size' },
-  { id: 'shoes', name: 'Running Shoes', price: 129.99, subtitle: 'UK 10' },
-  { id: 'mugs', name: 'Ceramic Mug Set', price: 24.00, subtitle: '350ml' },
-  { id: 'petcarrier', name: 'Premium All-Weather Travel Pet Carrier Backpack (Airline Approved)', price: 58.50, subtitle: 'Medium', custom: 'badge' },
-  { id: 'lamp', name: 'Desk Lamp', price: 45.00, subtitle: 'Warm White', custom: 'string' },
-  { id: 'bottle', name: 'Water Bottle', price: 18.99, subtitle: null }
-];
+const ArToast = { show: showToast, config: toastConfig };
+/* ===== end arToast.js ===== */
 
-function createPetBadge() {
-  const frag = document.createDocumentFragment();
-  const icon = document.createElement('span');
-  icon.className = 'minicart-requirements-icon minicart-requirements-icon-pet';
-  icon.setAttribute('role', 'img');
-  icon.setAttribute('aria-label', 'Pet-friendly');
-  icon.title = 'Pet-friendly';
-  const label = document.createElement('span');
-  label.textContent = 'Pet-friendly';
-  frag.append(icon, label);
-  return frag;
-}
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const make = (tag, cls, text) => {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (text !== undefined) node.textContent = text;
+  return node;
+};
 
-function buildFields(p, qty) {
-  const fields = [{ text: p.name, className: 'toast-title' }];
-  if (p.subtitle) fields.push({ text: p.subtitle, className: 'toast-subtitle' });
-  fields.push([
-    { text: `Qty: ${qty}`, className: 'toast-qty' },
-    { text: `£${p.price.toFixed(2)}`, className: 'toast-price' }
-  ]);
-  return fields;
-}
+const DEFAULT_FIELDS = structuredClone(toastConfig.fields);
+const pad = n => String(n).padStart(2, '0');
+const fmtDate = (d = new Date()) =>
+  `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const money = n => `$${n.toFixed(2)}`;
 
-function addToCart(p, qty) {
-  toastConfig.fields = buildFields(p, qty);
-  toastConfig.custom = p.custom === 'badge' ? createPetBadge()
-                      : p.custom === 'string' ? '⚡ Ships within 24 hours'
-                      : null;
+/* Every call resets BOTH fields and custom, so toast types never leak into each other. */
+function fire(fields, custom = null) {
+  toastConfig.fields = fields;
+  toastConfig.custom = custom;
   showToast();
 }
 
-const grid = document.getElementById('grid');
-products.forEach(p => {
-  const card = document.createElement('div');
-  card.className = 'card';
-  card.dataset.testid = `product-card-${p.id}`;
-  card.innerHTML = `
-    <div class="name">${p.name}</div>
-    <div class="meta"><span>£${p.price.toFixed(2)}</span><span>${p.subtitle || '—'}</span></div>
-    ${p.custom === 'badge' ? '<span class="hint">🐾 pet badge on add</span>' : ''}
-    ${p.custom === 'string' ? '<span class="hint">⚡ custom string on add</span>' : ''}
-    ${!p.subtitle ? '<span class="hint">no subtitle (edge case)</span>' : ''}
-    <label>Qty <input type="number" min="0" max="9" value="1" data-testid="qty-${p.id}"></label>
-    <button data-testid="add-to-cart-${p.id}">Add to cart</button>
-  `;
-  card.querySelector('button').addEventListener('click', () => {
-    const qty = Number(card.querySelector('input').value) || 0;
-    addToCart(p, qty);
+/* ---------- Custom-slot node factories (always a fresh node) ---------- */
+function makeUndo() {
+  const wrap = make('div', 'custom-row');
+  const msg = make('span', '', 'Item removed');
+  const btn = make('button', 'toast-btn', 'Undo');
+  btn.type = 'button';
+  btn.addEventListener('click', () => {
+    btn.disabled = true;
+    btn.textContent = 'Undone';
+    msg.textContent = 'Item restored';
   });
-  grid.appendChild(card);
-});
-
-document.getElementById('btnOverflow').addEventListener('click', () => {
-  logEvent('— overflow test: firing 6 toasts —');
-  products.forEach((p, i) => setTimeout(() => addToCart(p, 1), i * 150));
-});
-document.getElementById('btnEmpty').addEventListener('click', () => {
-  toastConfig.fields = [];
-  toastConfig.custom = null;
-  showToast();
-});
-document.getElementById('btnRegression').addEventListener('click', () => {
-  logEvent('— custom-slot reset check: badge then plain —');
-  addToCart(products.find(p => p.id === 'petcarrier'), 1);
-  setTimeout(() => addToCart(products.find(p => p.id === 'headphones'), 1), 300);
-});
-document.getElementById('btnClearLog').addEventListener('click', () => {
-  document.getElementById('log').textContent = '';
-});
-
-/* live event log via MutationObserver — observes arToast's own DOM output, no module changes needed */
-const logEl = document.getElementById('log');
-const t0 = Date.now();
-function logEvent(msg) {
-  const line = document.createElement('div');
-  line.textContent = `+${((Date.now() - t0) / 1000).toFixed(2)}s  ${msg}`;
-  logEl.appendChild(line);
-  logEl.scrollTop = logEl.scrollHeight;
-  document.getElementById('stats').textContent = `Active toasts: ${document.querySelectorAll('#toastContainer .toast').length}`;
+  wrap.append(msg, btn);
+  return wrap;
 }
 
-new MutationObserver(muts => {
-  const seen = new Set();
-  muts.forEach(m => {
-    if (m.type === 'childList') {
-      m.addedNodes.forEach(n => n.classList?.contains('toast') &&
-        logEvent(`toast added — "${(n.querySelector('.toast-title,.toast-message') || n).textContent.trim().slice(0, 34) || 'empty'}"`));
-      m.removedNodes.forEach(n => n.classList?.contains('toast') && logEvent('toast removed from DOM'));
-    } else if (m.attributeName === 'class' && m.target.classList.contains('toast')) {
-      if (seen.has(m.target)) return;
-      seen.add(m.target);
-      const c = m.target.classList;
-      logEvent(c.contains('show') ? 'toast entered' : c.contains('exit-right') ? 'toast evicted (overflow)' : 'toast exiting (expired)');
+function makePromo() {
+  const wrap = make('div', 'promo');
+  const btn = make('button', 'toast-btn', 'Copy');
+  btn.type = 'button';
+  btn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText('WELCOME10');
+      btn.textContent = 'Copied';
+    } catch {
+      btn.textContent = 'Copy failed';
     }
   });
-}).observe(document.getElementById('toastContainer'), { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+  wrap.append(make('strong', '', 'Save 10%'), make('code', '', 'WELCOME10'), btn);
+  return wrap;
+}
 
-let checkoutOpen = false;
-new MutationObserver(() => {
-  const open = document.getElementById('checkout').classList.contains('showC');
-  if (open === checkoutOpen) return;
-  checkoutOpen = open;
-  logEvent(open ? 'checkout CTA opened' : 'checkout CTA closed');
-}).observe(document.getElementById('checkout'), { attributes: true, attributeFilter: ['class'] });
+function makeStars() {
+  const wrap = make('div', 'stars');
+  wrap.setAttribute('role', 'group');
+  wrap.setAttribute('aria-label', 'Rate your order');
+  const status = make('span', '', 'Tap to rate');
+  const buttons = [1, 2, 3, 4, 5].map(n => {
+    const btn = make('button', 'star', '★');
+    btn.type = 'button';
+    btn.setAttribute('aria-label', `${n} of 5 stars`);
+    btn.setAttribute('aria-pressed', 'false');
+    btn.addEventListener('click', () => {
+      buttons.forEach((b, i) => {
+        b.classList.toggle('on', i < n);
+        b.setAttribute('aria-pressed', String(i === n - 1));
+      });
+      status.textContent = `Thanks, ${n}/5`;
+    });
+    return btn;
+  });
+  wrap.append(...buttons, status);
+  return wrap;
+}
+
+/* ---------- Demo actions ---------- */
+const cart = { count: 0, total: 0 };
+let flow = false;
+
+function renderCheckout() {
+  $('#coEyebrow').textContent = flow ? `Cart · ${cart.count} item${cart.count === 1 ? '' : 's'}` : 'Complete the set';
+  $('#coLine').textContent = flow ? `Subtotal ${money(cart.total)}. Ready when you are.` : 'Add a carry case for 15% off today.';
+  $('#coBtn').textContent = flow ? 'Go to checkout' : 'Add case · $19.99';
+}
+
+const demos = {
+  success: () => fire([{ text: 'Saved successfully', className: 'toast-message toast-success' }]),
+  alert: () => fire([{ text: 'Connection lost. Retrying…', className: 'toast-message toast-alert' }]),
+  info: () => fire([{ text: 'Sync completes in about 2 minutes', className: 'toast-message toast-info' }]),
+  default: () => {
+    toastConfig.fields = structuredClone(DEFAULT_FIELDS);
+    toastConfig.custom = null;
+    ArToast.show();
+  },
+  literal: () => fire([{ text: '<b>bold</b> & <i>italic</i>', className: 'toast-message' }]),
+  now: () => { $('#form-detail').elements.ts.value = fmtDate(); },
+  spec: () => fire([
+    { text: 'Wireless Headphones', className: 'toast-title' },
+    [{ text: 'Qty: 2', className: 'toast-qty' }, { text: '$79.99', className: 'toast-price' }]
+  ]),
+  summary: () => fire([
+    [{ text: 'Subtotal', className: 'toast-qty' }, { text: '$159.98', className: 'toast-price' }],
+    [{ text: 'Shipping', className: 'toast-qty' }, { text: 'Free', className: 'toast-price' }]
+  ]),
+  triple: () => fire([
+    { text: 'Desk Lamp', className: 'toast-title' },
+    [
+      { text: 'Qty: 1', className: 'toast-qty' },
+      { text: 'Matte black', className: 'toast-qty' },
+      { text: '$42.00', className: 'toast-price' }
+    ]
+  ]),
+  undo: () => fire([{ text: 'Cart updated', className: 'toast-title' }], makeUndo()),
+  promo: () => fire([{ text: 'Your code is ready', className: 'toast-title' }], makePromo()),
+  stars: () => fire([{ text: 'How was your order?', className: 'toast-title' }], makeStars()),
+  reuse: () => {
+    const shared = makePromo();
+    fire([{ text: 'Toast A · holds the node', className: 'toast-title' }], shared);
+    setTimeout(() => fire([{ text: 'Toast B · steals the node', className: 'toast-title' }], shared), 1200);
+  },
+  leak: () => {
+    toastConfig.fields = [{ text: 'Toast A · has a custom string', className: 'toast-title' }];
+    toastConfig.custom = 'Stale custom text';
+    showToast();
+    setTimeout(() => {
+      toastConfig.fields = [{ text: 'Toast B · no reset before showToast()', className: 'toast-title' }];
+      showToast();
+    }, 1200);
+  },
+  addcart: () => {
+    cart.count += 1;
+    cart.total += 79.99;
+    renderCheckout();
+    demos.spec();
+  },
+  single: () => fire([{ text: 'Single toast', className: 'toast-message toast-info' }]),
+  clear: () => clearObserver()
+};
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-demo]');
+  if (btn) demos[btn.dataset.demo]?.();
+});
+
+$('#form-basic').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.currentTarget.elements;
+  const text = f.text.value.trim();
+  if (!text) return;
+  const className = ['toast-message', f.tone.value && `toast-${f.tone.value}`].filter(Boolean).join(' ');
+  fire([{ text, className }]);
+});
+
+$('#form-detail').elements.ts.value = fmtDate();
+$('#form-detail').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.currentTarget.elements;
+  const fields = [[f.heading, 'toast-title'], [f.desc, 'toast-subtitle'], [f.ts, 'toast-timestamp']]
+    .map(([input, className]) => ({ text: input.value.trim(), className }))
+    .filter(field => field.text);
+  if (fields.length) fire(fields);
+});
+
+const PRODUCTS = { headphones: ['Wireless Headphones', 79.99], hub: ['USB-C Hub', 34.5], lamp: ['Desk Lamp', 42] };
+$('#form-cart').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.currentTarget.elements;
+  const [name, price] = PRODUCTS[f.product.value];
+  const qty = Math.min(9, Math.max(1, Number(f.qty.value) || 1));
+  fire([
+    { text: name, className: 'toast-title' },
+    [{ text: `Qty: ${qty}`, className: 'toast-qty' }, { text: money(price * qty), className: 'toast-price' }]
+  ]);
+});
+
+$('#form-custom').addEventListener('submit', e => {
+  e.preventDefault();
+  const text = e.currentTarget.elements.custom.value.trim();
+  fire([{ text: 'Order updated', className: 'toast-title' }], text || null);
+});
+
+let bursting = false;
+$('#form-burst').addEventListener('submit', e => {
+  e.preventDefault();
+  if (bursting) return;
+  const f = e.currentTarget.elements;
+  const count = Math.min(20, Math.max(2, Number(f.count.value) || 8));
+  const gap = Math.min(2000, Math.max(0, Number(f.gap.value) || 0));
+  const btn = $('#burstBtn');
+  const t0 = performance.now();
+  let n = 0;
+  bursting = true;
+  btn.setAttribute('aria-disabled', 'true');
+  const tick = () => {
+    n += 1;
+    fire([
+      { text: `Burst #${n} of ${count}`, className: 'toast-title' },
+      { text: `fired at +${Math.round(performance.now() - t0)} ms`, className: 'toast-subtitle' }
+    ]);
+    if (n < count) {
+      setTimeout(tick, gap);
+    } else {
+      bursting = false;
+      btn.removeAttribute('aria-disabled');
+    }
+  };
+  tick();
+});
+
+const flowSwitch = $('#flowSwitch');
+flowSwitch.addEventListener('click', () => {
+  flow = !flow;
+  flowSwitch.setAttribute('aria-checked', String(flow));
+  renderCheckout();
+});
+
+$('#coBtn').addEventListener('click', () => {
+  if (flow) {
+    fire([{ text: 'Redirecting to checkout… (demo)', className: 'toast-message toast-info' }]);
+  } else {
+    cart.count += 1;
+    cart.total += 19.99;
+    fire([
+      { text: 'Carry case', className: 'toast-title' },
+      [{ text: 'Qty: 1', className: 'toast-qty' }, { text: '$19.99', className: 'toast-price' }]
+    ]);
+  }
+});
+
+/* ---------- Observer: reads the DOM only, never module internals ---------- */
+const container = $('#toastContainer');
+const checkout = $('#checkout');
+const logs = $$('[data-log]');
+const toastIds = new WeakMap();
+let toastSeq = 0;
+let runStart = 0;
+let peak = 0;
+
+const label = node => {
+  if (!toastIds.has(node)) toastIds.set(node, (toastSeq += 1));
+  const first = node.firstElementChild?.textContent ?? 'custom only';
+  return `T${toastIds.get(node)} “${first.slice(0, 24)}”`;
+};
+
+function log(kind, message) {
+  const now = performance.now();
+  if (!runStart) runStart = now;
+  logs.forEach(list => {
+    const li = make('li', `ev-${kind}`);
+    li.append(make('time', '', `+${((now - runStart) / 1000).toFixed(2)}s`), ` ${message}`);
+    list.append(li);
+    while (list.children.length > 80) list.firstElementChild.remove();
+    list.scrollTop = list.scrollHeight;
+  });
+}
+
+function setStat(key, value) {
+  $$(`[data-stat="${key}"]`).forEach(node => { node.textContent = value; });
+}
+
+function paint() {
+  peak = Math.max(peak, container.children.length);
+  setStat('onscreen', container.children.length);
+  setStat('peak', peak);
+  setStat('exiting', $$('.toast[data-exiting]', container).length);
+  setStat('bottom', container.style.bottom || '20px');
+  setStat('cta', checkout.classList.contains('showC') ? 'open' : 'closed');
+  setStat('cta-h', `${checkout.offsetHeight}px`);
+}
+
+function clearObserver() {
+  logs.forEach(list => list.replaceChildren());
+  peak = container.children.length;
+  runStart = 0;
+  paint();
+}
+
+new MutationObserver(records => {
+  records.forEach(m => {
+    if (m.type === 'childList' && m.target === container) {
+      m.addedNodes.forEach(node => {
+        if (container.children.length === 1 && !checkout.classList.contains('showC')) runStart = 0;
+        log('add', `${label(node)} added`);
+      });
+      m.removedNodes.forEach(node => log('gone', `${label(node)} removed from DOM`));
+    } else if (m.type === 'attributes' && m.target === container) {
+      log('cta', `#toastContainer bottom → ${container.style.bottom}`);
+    } else if (m.type === 'attributes' && m.target.classList?.contains('toast')) {
+      if (m.attributeName === 'data-exiting') {
+        log('queue', `${label(m.target)} exit requested`);
+      } else {
+        const was = new Set((m.oldValue ?? '').split(/\s+/));
+        const now = m.target.classList;
+        if (!was.has('show') && now.contains('show')) log('add', `${label(m.target)} enter (.show)`);
+        if (was.has('show') && !now.contains('show')) {
+          log(now.contains('exit-right') ? 'evict' : 'exit', `${label(m.target)} ${now.contains('exit-right') ? 'evicted (.exit-right)' : 'exit animation'}`);
+        }
+      }
+    }
+  });
+  paint();
+}).observe(container, {
+  childList: true,
+  subtree: true,
+  attributes: true,
+  attributeOldValue: true,
+  attributeFilter: ['class', 'data-exiting', 'style']
+});
+
+new MutationObserver(records => {
+  records.forEach(m => {
+    const was = (m.oldValue ?? '').includes('showC');
+    const now = checkout.classList.contains('showC');
+    if (was !== now) log('cta', now ? '#checkout.showC added · CTA slides in' : '#checkout.showC removed · CTA closes');
+  });
+  paint();
+}).observe(checkout, { attributes: true, attributeOldValue: true, attributeFilter: ['class'] });
+
+renderCheckout();
+paint();
 </script>
 </body>
 </html>
